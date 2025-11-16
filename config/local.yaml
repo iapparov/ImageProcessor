@@ -1,0 +1,40 @@
+server:
+  host: "localhost"
+  port: 8080
+
+logger:
+  level: "debug"
+
+gin:
+  mode: "release"
+
+db_config:
+  postgres:
+    host: "localhost"
+    port: 5433
+    ssl_mode: "disable"
+  max_open_conns: 5
+  max_idle_conns: 10
+  conn_max_lifetime: "100s"
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  group_id: "image-worker"
+  topic: "image_events"
+  consumer_worker_count: 4
+
+retry_strategy:
+  attempts: 5
+  delay: "1s"
+  backoffs: 2
+
+storage_path:
+  input_dir: "./data_img/original/" ## "/"" in the end required!!!
+  output_dir: "./data_img/processed/" ## "/"" in the end required!!!
+
+img_formats:
+  - JPG
+  - PNG
+  - GIF
+  - JPEG

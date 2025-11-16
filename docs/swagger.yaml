@@ -1,0 +1,120 @@
+basePath: /
+definitions:
+  web.ErrorResponse:
+    properties:
+      error:
+        example: invalid input data
+        type: string
+    type: object
+  web.ImageResponse:
+    properties:
+      ID:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      Name:
+        example: example.png
+        type: string
+      Status:
+        example: Processing
+        type: string
+      URL:
+        example: /data_img/processed/example.png
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API для обработки изображений
+  title: imageProcessor API
+  version: "1.0"
+paths:
+  /api/image/{id}:
+    delete:
+      description: Удаляет изображение из хранилища (помечает, как удаленное)
+      parameters:
+      - description: Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Удаление изображения
+      tags:
+      - Images
+    get:
+      description: Возвращает обработанное изображение, если оно готово, иначе — статус
+        обработки
+      parameters:
+      - description: Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Processed image file
+          schema:
+            type: file
+        "202":
+          description: Processing status
+          schema:
+            $ref: '#/definitions/web.ImageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Получение изображения
+      tags:
+      - Images
+  /api/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает изображение и ставит его на обработку (ресайз, миниатюра,
+        водяной знак)
+      parameters:
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Watermark text
+        in: formData
+        name: watermark
+        type: string
+      - description: Resize in format WIDTHxHEIGHT, e.g., 500x500
+        in: formData
+        name: resize
+        type: string
+      - description: Generate thumbnail, 1 = true, 0 = false
+        in: formData
+        name: mini
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/web.ImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Загрузка изображения
+      tags:
+      - Images
+swagger: "2.0"

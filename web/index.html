@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Image Processor</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .image-card { display: inline-block; margin: 10px; text-align: center; }
+  img { max-width: 200px; display: block; margin-bottom: 5px; }
+  button { margin-top: 5px; }
+</style>
+</head>
+<body>
+<h1>Image Processor</h1>
+
+<form id="uploadForm">
+  <input type="file" name="file" required>
+  <input type="text" name="watermark" placeholder="Watermark text">
+  <label>Resize width: <input type="number" name="resizeWidth"></label>
+  <label>Resize height: <input type="number" name="resizeHeight"></label>
+  <label>Mini: <input type="checkbox" name="mini"></label>
+  <button type="submit">Upload</button>
+</form>
+
+<h2>Uploaded Images</h2>
+<div id="images"></div>
+
+<script>
+const imagesDiv = document.getElementById('images');
+const form = document.getElementById('uploadForm');
+const BASE_URL = 'http://localhost:8080';
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = new FormData(form);
+
+  const widthVal = Math.max(0, parseInt(data.get('resizeWidth') || 0));
+  const heightVal = Math.max(0, parseInt(data.get('resizeHeight') || 0));
+
+  let resizeStr = '';
+  if (widthVal > 0 || heightVal > 0) {
+    resizeStr = `${widthVal}x${heightVal}`;
+  }
+
+  const payload = new FormData();
+  payload.append('file', data.get('file'));
+  payload.append('watermark', data.get('watermark'));
+  if (resizeStr) {
+    payload.append('resize', resizeStr);
+  }
+  payload.append('mini', data.get('mini') ? "1" : "0");
+
+  const res = await fetch(`${BASE_URL}/api/upload`, { method: 'POST', body: payload });
+  const img = await res.json();
+  addImageCard(img);
+});
+
+function addImageCard(img) {
+  const card = document.createElement('div');
+  card.className = 'image-card';
+  card.id = img.ID;
+  
+  const picture = document.createElement('img');
+  picture.src = img.URL;
+  picture.alt = img.Name;
+  card.appendChild(picture);
+  
+  const status = document.createElement('div');
+  status.textContent = img.Status;
+  status.className = 'status';
+  card.appendChild(status);
+  
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.onclick = async () => {
+    await fetch(`${BASE_URL}/api/image/` + img.ID, { method: 'DELETE' });
+    card.remove();
+  };
+  card.appendChild(deleteBtn);
+  
+  imagesDiv.appendChild(card);
+  
+  // Обновление статуса каждые 2 секунды, пока не обработано
+// Обновление статуса каждые 2 секунды, пока не обработано, максимум 5 раз
+const maxRetries = 5;
+let attempt = 0;
+
+const interval = setInterval(async () => {
+  attempt++;
+  if (attempt > maxRetries) {
+    status.textContent = 'Processing timeout';
+    clearInterval(interval);
+    return;
+  }
+
+  const res = await fetch(`${BASE_URL}/api/image/` + img.ID);
+  if (res.status === 200) {
+    // Картинка готова — ставим её src на endpoint
+    picture.src = `${BASE_URL}/api/image/${img.ID}?t=${new Date().getTime()}`;
+    status.textContent = 'Processed';
+    clearInterval(interval);
+  } else if (res.status === 202) {
+    status.textContent = 'Processing...';
+  }
+}, 2000);
+}
+</script>
+</body>
+</html>

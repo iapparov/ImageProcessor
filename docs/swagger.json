@@ -1,0 +1,177 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API для обработки изображений",
+        "title": "imageProcessor API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/api/image/{id}": {
+            "get": {
+                "description": "Возвращает обработанное изображение, если оно готово, иначе — статус обработки",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Получение изображения",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Processed image file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "202": {
+                        "description": "Processing status",
+                        "schema": {
+                            "$ref": "#/definitions/web.ImageResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет изображение из хранилища (помечает, как удаленное)",
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Удаление изображения",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Image ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/upload": {
+            "post": {
+                "description": "Загружает изображение и ставит его на обработку (ресайз, миниатюра, водяной знак)",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Загрузка изображения",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Watermark text",
+                        "name": "watermark",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resize in format WIDTHxHEIGHT, e.g., 500x500",
+                        "name": "resize",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Generate thumbnail, 1 = true, 0 = false",
+                        "name": "mini",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.ImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "web.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "invalid input data"
+                }
+            }
+        },
+        "web.ImageResponse": {
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                "Name": {
+                    "type": "string",
+                    "example": "example.png"
+                },
+                "Status": {
+                    "type": "string",
+                    "example": "Processing"
+                },
+                "URL": {
+                    "type": "string",
+                    "example": "/data_img/processed/example.png"
+                }
+            }
+        }
+    }
+}
